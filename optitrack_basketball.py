@@ -6,11 +6,12 @@ import optitrack.csv_reader as csv
 
 filename = "Takes\Basket-Marco-Interaction_001.csv"
 
-take = csv.Take().readCSV(filename, verbose=True)
+take = csv.Take().readCSV(filename)
 
 print("Found rigid bodies:", take.rigid_bodies.keys())
 
 body = take.rigid_bodies.copy()
+
 ball = {'Ball': take.rigid_bodies['Ball']}
 body.pop('Ball')
 
@@ -21,7 +22,6 @@ body_edges = [[0,1],[1,2],[2,3],[3,4],[3,5],[5,6],[6,7],[7,8],[3,9],[9,10],[10,1
                 [0,16],[16,17],[17,18],[18,20],[15,19]]
 
 # Skeleton instantiation 
-
 bones_pos = []
 if len(body) > 0:
     for body in body: 
@@ -69,18 +69,17 @@ time.sleep(2)
 
 ball_joint = ball_pos[0]
 for i in range(0,len(bones_pos)):
+    #To reduce the framerate
     if i%20 == 0:
         print(i)
         # If the measurements are correct the model updates
         if ball_pos[i] != [None]:
             ball_joint = ball_pos[i]
             print('ball update')
-        if None not in bones_pos[i]:
-            new_joints = bones_pos[i]
-            print('bones update')
+        new_joints = bones_pos[i]
 
-        print(new_joints, 'ball', ball_joint)
-        # center_skel = skeleton_joints.get_center()
+        #print(new_joints, 'ball', ball_joint)
+        center_skel = skeleton_joints.get_center()
         skeleton_joints.points = o3d.utility.Vector3dVector(new_joints)
         keypoints.points = o3d.utility.Vector3dVector(new_joints)
         ball_keypoint.points = o3d.utility.Vector3dVector(ball_joint)
