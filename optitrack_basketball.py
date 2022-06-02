@@ -1,3 +1,4 @@
+from PIL import Image, ImageDraw, ImageFont
 import open3d as o3d
 import time
 import numpy as np
@@ -10,8 +11,8 @@ FRAMERATE = 120
 # Select take 
 
 # filename = "Takes\Basket-Marco-Interaction.csv" ## Handling
-filename = "Takes\Basket-Marco-Interaction_001.csv" ## Dribles
-# filename = "Takes\Basket-Marco-Interaction_002.csv" ## Shot
+# filename = "Takes\Basket-Marco-Interaction_001.csv" ## Dribles
+filename = "Takes\Basket-Marco-Interaction_002.csv" ## Shot
 # filename = "Takes\Basket-Marco-Interaction_003.csv" ## Under legs
 # filename = "Takes\Basket-Marco-Interaction_004.csv" ## Too much corrupted!!
 
@@ -86,13 +87,25 @@ ball_trajectory.points = o3d.utility.Vector3dVector([ball_joint])
 ball_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
 
 vis = o3d.visualization.Visualizer()
+label = o3d.visualization.gui.Label('We')
+
+WINDOW_WIDTH=1920 # change this if needed
+WINDOW_HEIGHT=1080 # change this if needed
+img = Image.new('RGB', (WINDOW_WIDTH, WINDOW_HEIGHT), color = (255,255,255))
+#fnt = ImageFont.load('arial.ttf')
+d = ImageDraw.Draw(img)
+d.text((1300,100), "STATUS: GOOD", fill=(0,0,0)) # puts text in upper right
+img.save('pil_text.png')
 
 # Insertion of geometries in the visualizer
-vis.create_window()
+vis.create_window(width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
 vis.add_geometry(skeleton_joints)
 vis.add_geometry(keypoints)
 vis.add_geometry(ball_keypoint)
 vis.add_geometry(ball_trajectory)
+
+im = o3d.io.read_image("./pil_text.png")
+vis.add_geometry(im)
 
 time.sleep(2)
 
@@ -102,27 +115,38 @@ missed_body = 0
 ball_update = 0
 trajectory = []
 trajectory.append(ball_joint)
+trajectory_speed = trajectory.copy()
 
 for i in range(len(bones_pos)):
     #To reduce the framerate
     if i%1 == 0:
-        print(i)
+        #print(i)
         frame_count += 1
         # If the measurements are correct the model updates
         if ball_pos[i] != None:
             ball_joint = ball_pos[i]
             trajectory.append(ball_joint)
             trajectory_edges.append([ball_update, ball_update+1])
+            trajectory_speed.append(ball_joint)
             ball_update += 1
         else:
             missed_ball += 1
+            trajectory_speed.append(ball_joint)
         if None not in bones_pos[i]:
             new_joints = bones_pos[i]
         else:
             missed_body += 1
 
         # Count for corrupted measurements
-        print(f"Missed ball: {missed_ball}/{frame_count}, Missed body: {missed_body}/{frame_count}")
+        #print(f"Missed ball: {missed_ball}/{frame_count}, Missed body: {missed_body}/{frame_count}")
+
+        RESOLUTION = 10
+        if frame_count % RESOLUTION == 0 and frame_count != 0:
+            t = (RESOLUTION/FRAMERATE)
+            distance = distance_eval(trajectory_speed[frame_count-RESOLUTION+1:frame_count])
+            #print(trajectory_speed[frame_count-RESOLUTION+1:frame_count])
+            speed = distance/t
+            print(f"Speed {speed} [m/s]")
 
         center_skel = skeleton_joints.get_center()
         skeleton_joints.points = o3d.utility.Vector3dVector(new_joints)
@@ -140,11 +164,11 @@ for i in range(len(bones_pos)):
         vis.update_renderer()
         vis.poll_events()
 
-        #time.sleep(0.05)
+        time.sleep(0.05)
     
 vis.run()
 
-time = (len(bones_pos)/FRAMERATE)
+t = (len(bones_pos)/FRAMERATE)
 distance = distance_eval(trajectory)
-average_speed = distance/time
+average_speed = distance/t
 print(f"The ball traveled for {distance} [m], with and average speed of {average_speed} [m/s]")
