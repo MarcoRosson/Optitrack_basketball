@@ -4,7 +4,11 @@ import numpy as np
 
 import optitrack.csv_reader as csv
 
-filename = "Takes\Basket-Marco-Interaction_001.csv"
+filename = "Takes\Basket-Marco-Interaction.csv"
+# filename = "Takes\Basket-Marco-Interaction_001.csv"
+# filename = "Takes\Basket-Marco-Interaction_002.csv"
+# filename = "Takes\Basket-Marco-Interaction_003.csv"
+# filename = "Takes\Basket-Marco-Interaction_004.csv"
 
 take = csv.Take().readCSV(filename)
 
@@ -54,8 +58,9 @@ ball_pos = []
 if len(ball) > 0:
     for ball in ball: 
         b = take.rigid_bodies[ball]
+        #print("b:",b.positions)
         #print('ball position', b.positions)
-        ball_pos.append(b.positions)
+        ball_pos = b.positions
 
 ball_pos = np.array(ball_pos).T.tolist()
 
@@ -65,9 +70,16 @@ for i in range(100):
         ball_joint = ball_pos[i]
         break
 
+print('Joinin:' , ball_joint)
+
+trajectory_edges = []
+
 color = [1, 0, 0]
 ball_keypoint = o3d.geometry.PointCloud()
-ball_keypoint.points = o3d.utility.Vector3dVector(ball_pos[0])
+ball_keypoint.points = o3d.utility.Vector3dVector([ball_joint])
+ball_trajectory = o3d.geometry.LineSet()
+ball_trajectory.points = o3d.utility.Vector3dVector([ball_joint])
+ball_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
 
 
 
@@ -78,37 +90,60 @@ vis.create_window()
 vis.add_geometry(skeleton_joints)
 vis.add_geometry(keypoints)
 vis.add_geometry(ball_keypoint)
+vis.add_geometry(ball_trajectory)
 
 time.sleep(2)
 
 
-
-for i in range(0,len(bones_pos)):
+frame_count = 0
+missed_ball = 0
+missed_body = 0
+ball_update = 0
+trajectory = []
+trajectory.append(ball_joint)
+for i in range(len(bones_pos)):
     #To reduce the framerate
-    if i%20 == 0:
+    if i%2 == 0:
         print(i)
+        frame_count += 1
+        #trajectory_edges.append([frame_count-1, frame_count])
+        print('Edges:', trajectory_edges)
+        print('Trajectory: ', trajectory)
         # If the measurements are correct the model updates
-        if ball_pos[i] != [None]:
+        if ball_pos[i] != None:
             ball_joint = ball_pos[i]
-            print('ball update')
+            trajectory.append(ball_joint)
+            trajectory_edges.append([ball_update, ball_update+1])
+            ball_update += 1
+        else:
+            missed_ball += 1
         if None not in bones_pos[i]:
             new_joints = bones_pos[i]
+        else:
+            missed_body += 1
 
+        print(f"Missed ball: {missed_ball}/{frame_count}, Missed body: {missed_body}/{frame_count}")
         #print(new_joints, 'ball', ball_joint)
         center_skel = skeleton_joints.get_center()
         skeleton_joints.points = o3d.utility.Vector3dVector(new_joints)
+        print('joints: ', new_joints)
+        print('trajectory: ', trajectory)
         keypoints.points = o3d.utility.Vector3dVector(new_joints)
-        ball_keypoint.points = o3d.utility.Vector3dVector(ball_joint)
+        ball_keypoint.points = o3d.utility.Vector3dVector([ball_joint])
+        ball_trajectory.points = o3d.utility.Vector3dVector(trajectory)
+        ball_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
 
         # Update of skeleton and ball
         vis.update_geometry(skeleton_joints)
+        #print('skel: ', skeleton_joints)
         vis.update_geometry(keypoints)
         vis.update_geometry(ball_keypoint)
+        vis.update_geometry(ball_trajectory)
         
         vis.update_renderer()
         vis.poll_events()
 
-        time.sleep(0.2)
+        time.sleep(0.05)
     
 vis.run()
 
