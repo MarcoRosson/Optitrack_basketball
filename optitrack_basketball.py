@@ -29,15 +29,22 @@ if len(body) > 0:
         bones_pos.append(bones.positions)
 
 bones_pos = np.array(bones_pos).T.tolist()
+
+for i in range(100):
+    if None not in bones_pos[i]:
+        print(f"Body starting from position {i}")
+        bone_joint = bones_pos[i]
+        break
+
 colors = [[1, 0, 0] for i in range(len(body_edges))]
 keypoints = o3d.geometry.PointCloud()
-keypoints.points = o3d.utility.Vector3dVector(bones_pos[0])
+keypoints.points = o3d.utility.Vector3dVector(bone_joint)
 keypoints_center = keypoints.get_center()
-keypoints.points = o3d.utility.Vector3dVector(bones_pos[0])
+keypoints.points = o3d.utility.Vector3dVector(bone_joint)
 skeleton_joints = o3d.geometry.LineSet()
-skeleton_joints.points = o3d.utility.Vector3dVector(bones_pos[0])
+skeleton_joints.points = o3d.utility.Vector3dVector(bone_joint)
 center_skel = skeleton_joints.get_center()
-skeleton_joints.points = o3d.utility.Vector3dVector(bones_pos[0])
+skeleton_joints.points = o3d.utility.Vector3dVector(bone_joint)
 skeleton_joints.lines = o3d.utility.Vector2iVector(body_edges)
 skeleton_joints.colors = o3d.utility.Vector3dVector(colors)
 
@@ -51,6 +58,13 @@ if len(ball) > 0:
         ball_pos.append(b.positions)
 
 ball_pos = np.array(ball_pos).T.tolist()
+
+for i in range(100):
+    if ball_pos[i] != None:
+        print(f"Ball starting from position {i}")
+        ball_joint = ball_pos[i]
+        break
+
 color = [1, 0, 0]
 ball_keypoint = o3d.geometry.PointCloud()
 ball_keypoint.points = o3d.utility.Vector3dVector(ball_pos[0])
@@ -67,7 +81,8 @@ vis.add_geometry(ball_keypoint)
 
 time.sleep(2)
 
-ball_joint = ball_pos[0]
+
+
 for i in range(0,len(bones_pos)):
     #To reduce the framerate
     if i%20 == 0:
@@ -76,7 +91,8 @@ for i in range(0,len(bones_pos)):
         if ball_pos[i] != [None]:
             ball_joint = ball_pos[i]
             print('ball update')
-        new_joints = bones_pos[i]
+        if None not in bones_pos[i]:
+            new_joints = bones_pos[i]
 
         #print(new_joints, 'ball', ball_joint)
         center_skel = skeleton_joints.get_center()
