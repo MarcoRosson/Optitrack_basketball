@@ -4,11 +4,13 @@ import numpy as np
 
 import optitrack.csv_reader as csv
 
-filename = "Takes\Basket-Marco-Interaction.csv"
-# filename = "Takes\Basket-Marco-Interaction_001.csv"
-# filename = "Takes\Basket-Marco-Interaction_002.csv"
-# filename = "Takes\Basket-Marco-Interaction_003.csv"
-# filename = "Takes\Basket-Marco-Interaction_004.csv"
+# Select take 
+
+# filename = "Takes\Basket-Marco-Interaction.csv" ## Handling
+filename = "Takes\Basket-Marco-Interaction_001.csv" ## Dribles
+# filename = "Takes\Basket-Marco-Interaction_002.csv" ## Shot
+# filename = "Takes\Basket-Marco-Interaction_003.csv" ## Under legs
+# filename = "Takes\Basket-Marco-Interaction_004.csv" ## Too much corrupted!!
 
 take = csv.Take().readCSV(filename)
 
@@ -18,9 +20,6 @@ body = take.rigid_bodies.copy()
 
 ball = {'Ball': take.rigid_bodies['Ball']}
 body.pop('Ball')
-
-xaxis = [1,0,0]
-yaxis = [0,1,0]
 
 body_edges = [[0,1],[1,2],[2,3],[3,4],[3,5],[5,6],[6,7],[7,8],[3,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],
                 [0,16],[16,17],[17,18],[18,20],[15,19]]
@@ -34,12 +33,14 @@ if len(body) > 0:
 
 bones_pos = np.array(bones_pos).T.tolist()
 
+# Checking for the first non-corrupted position
 for i in range(100):
     if None not in bones_pos[i]:
         print(f"Body starting from position {i}")
         bone_joint = bones_pos[i]
         break
 
+# Generation of the skeleton
 colors = [[1, 0, 0] for i in range(len(body_edges))]
 keypoints = o3d.geometry.PointCloud()
 keypoints.points = o3d.utility.Vector3dVector(bone_joint)
@@ -58,34 +59,32 @@ ball_pos = []
 if len(ball) > 0:
     for ball in ball: 
         b = take.rigid_bodies[ball]
-        #print("b:",b.positions)
-        #print('ball position', b.positions)
         ball_pos = b.positions
 
 ball_pos = np.array(ball_pos).T.tolist()
 
+# Checking for the first non-corrupted position
 for i in range(100):
     if ball_pos[i] != None:
         print(f"Ball starting from position {i}")
         ball_joint = ball_pos[i]
         break
 
-print('Joinin:' , ball_joint)
-
+# Keypoint sequence for the trajectory
 trajectory_edges = []
 
-color = [1, 0, 0]
+# Generation of ball and trajectory
+color = [1, 0.5, 0]
 ball_keypoint = o3d.geometry.PointCloud()
 ball_keypoint.points = o3d.utility.Vector3dVector([ball_joint])
+ball_keypoint.colors = o3d.utility.Vector3dVector([color])
 ball_trajectory = o3d.geometry.LineSet()
 ball_trajectory.points = o3d.utility.Vector3dVector([ball_joint])
 ball_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
 
-
-
 vis = o3d.visualization.Visualizer()
 
-# Generation of skeleton and ball
+# Insertion of geometries in the visualizer
 vis.create_window()
 vis.add_geometry(skeleton_joints)
 vis.add_geometry(keypoints)
@@ -94,21 +93,18 @@ vis.add_geometry(ball_trajectory)
 
 time.sleep(2)
 
-
 frame_count = 0
 missed_ball = 0
 missed_body = 0
 ball_update = 0
 trajectory = []
 trajectory.append(ball_joint)
+
 for i in range(len(bones_pos)):
     #To reduce the framerate
     if i%2 == 0:
         print(i)
         frame_count += 1
-        #trajectory_edges.append([frame_count-1, frame_count])
-        print('Edges:', trajectory_edges)
-        print('Trajectory: ', trajectory)
         # If the measurements are correct the model updates
         if ball_pos[i] != None:
             ball_joint = ball_pos[i]
@@ -122,12 +118,11 @@ for i in range(len(bones_pos)):
         else:
             missed_body += 1
 
+        # Count for corrupted measurements
         print(f"Missed ball: {missed_ball}/{frame_count}, Missed body: {missed_body}/{frame_count}")
-        #print(new_joints, 'ball', ball_joint)
+
         center_skel = skeleton_joints.get_center()
         skeleton_joints.points = o3d.utility.Vector3dVector(new_joints)
-        print('joints: ', new_joints)
-        print('trajectory: ', trajectory)
         keypoints.points = o3d.utility.Vector3dVector(new_joints)
         ball_keypoint.points = o3d.utility.Vector3dVector([ball_joint])
         ball_trajectory.points = o3d.utility.Vector3dVector(trajectory)
@@ -135,7 +130,6 @@ for i in range(len(bones_pos)):
 
         # Update of skeleton and ball
         vis.update_geometry(skeleton_joints)
-        #print('skel: ', skeleton_joints)
         vis.update_geometry(keypoints)
         vis.update_geometry(ball_keypoint)
         vis.update_geometry(ball_trajectory)
