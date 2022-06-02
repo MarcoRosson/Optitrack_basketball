@@ -1,8 +1,11 @@
 import open3d as o3d
 import time
 import numpy as np
+from measure import distance_eval
 
 import optitrack.csv_reader as csv
+
+FRAMERATE = 120
 
 # Select take 
 
@@ -102,7 +105,7 @@ trajectory.append(ball_joint)
 
 for i in range(len(bones_pos)):
     #To reduce the framerate
-    if i%2 == 0:
+    if i%1 == 0:
         print(i)
         frame_count += 1
         # If the measurements are correct the model updates
@@ -137,7 +140,11 @@ for i in range(len(bones_pos)):
         vis.update_renderer()
         vis.poll_events()
 
-        time.sleep(0.05)
+        #time.sleep(0.05)
     
 vis.run()
 
+time = (len(bones_pos)/FRAMERATE)
+distance = distance_eval(trajectory)
+average_speed = distance/time
+print(f"The ball traveled for {distance} [m], with and average speed of {average_speed} [m/s]")
