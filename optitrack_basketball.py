@@ -54,7 +54,7 @@ skeleton_joints.points = o3d.utility.Vector3dVector(bone_joint)
 center_skel = skeleton_joints.get_center()
 skeleton_joints.points = o3d.utility.Vector3dVector(bone_joint)
 skeleton_joints.lines = o3d.utility.Vector2iVector(body_edges)
-skeleton_joints.colors = o3d.utility.Vector3dVector(colors)
+#skeleton_joints.colors = o3d.utility.Vector3dVector(colors)
 
 # Ball instantiation
 
@@ -87,8 +87,8 @@ ball_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
 
 vis = o3d.visualization.Visualizer()
 
-WINDOW_WIDTH=1920 # change this if needed
-WINDOW_HEIGHT=1080 # change this if needed
+WINDOW_WIDTH=1920 
+WINDOW_HEIGHT=1080 
 
 # Insertion of geometries in the visualizer
 vis.create_window(width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
@@ -105,36 +105,34 @@ missed_body = 0
 ball_update = 0
 trajectory = []
 trajectory.append(ball_joint)
-trajectory_speed = trajectory.copy()
 max_speed = 0
 
 for i in range(len(bones_pos)):
     #To reduce the framerate (Will affect trajectory resolution and Ball speed)
     if i%1 == 0:
-        #print(i)
         frame_count += 1
         # If the measurements are correct the model updates
         if ball_pos[i] != None:
             ball_joint = ball_pos[i]
-            trajectory.append(ball_joint)
-            trajectory_edges.append([ball_update, ball_update+1])
-            trajectory_speed.append(ball_joint)
             ball_update += 1
         else:
             missed_ball += 1
-            trajectory_speed.append(ball_joint)
         if None not in bones_pos[i]:
             new_joints = bones_pos[i]
         else:
             missed_body += 1
 
+        trajectory.append(ball_joint)
+        trajectory_edges.append([frame_count-1, frame_count])
+
         # Count for corrupted measurements
         #print(f"Missed ball: {missed_ball}/{frame_count}, Missed body: {missed_body}/{frame_count}")
 
+        # Size of the speed average window
         RESOLUTION = 10
         if frame_count % RESOLUTION == 0 and frame_count != 0:
             t = (RESOLUTION/FRAMERATE)
-            distance = distance_eval(trajectory_speed[frame_count-RESOLUTION+1:frame_count])
+            distance = distance_eval(trajectory[frame_count-RESOLUTION+1:frame_count])
             speed = distance/t
             if speed > max_speed:
                 max_speed = speed
