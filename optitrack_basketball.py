@@ -2,6 +2,7 @@ import open3d as o3d
 import time
 import numpy as np
 from measure import distance_eval
+from measure import interpolate
 
 import optitrack.csv_reader as csv
 
@@ -11,8 +12,8 @@ FRAMERATE = 120
 
 # filename = "Takes\Basket-Marco-Interaction.csv" ## Handling
 filename = "Takes\Basket-Marco-Interaction_001.csv" ## Dribles
-# filename = "Takes\Basket-Marco-Interaction_002.csv" ## Shot
-# filename = "Takes\Basket-Marco-Interaction_003.csv" ## Under legs
+filename = "Takes\Basket-Marco-Interaction_002.csv" ## Shot
+filename = "Takes\Basket-Marco-Interaction_003.csv" ## Under legs
 # filename = "Takes\Basket-Marco-Interaction_004.csv" ## Too much corrupted!!
 
 take = csv.Take().readCSV(filename)
@@ -66,6 +67,8 @@ if len(ball) > 0:
 
 ball_pos = np.array(ball_pos).T.tolist()
 
+ball_pos = interpolate(ball_pos)
+
 # Checking for the first non-corrupted position
 for i in range(100):
     if ball_pos[i] != None:
@@ -106,6 +109,7 @@ ball_update = 0
 trajectory = []
 trajectory.append(ball_joint)
 max_speed = 0
+
 
 for i in range(len(bones_pos)):
     #To reduce the framerate (Will affect trajectory resolution and Ball speed)
