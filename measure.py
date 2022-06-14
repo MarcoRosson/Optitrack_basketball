@@ -1,5 +1,6 @@
 import numpy as np
-from numpy import round
+from numpy import float32, round
+from cv2 import KalmanFilter
 
 def distance_eval(traj: list) -> int:
     distance = 0
@@ -44,3 +45,100 @@ def interpolate(traj: list) -> list:
             interpolated_traj.append([0, 0, 0])
         
     return interpolated_traj
+
+def kalman_filt(traj: list) -> list:
+    kalman = KalmanFilter(6,3)
+
+    kalman.measurementMatrix = \
+        np.array([
+            [1,0,0,0,0,0],
+            [0,1,0,0,0,0],
+            [0,0,1,0,0,0]], np.float32)
+    kalman.transitionMatrix = \
+        np.array([
+            [1,0,0,1,0,0],
+            [0,1,0,0,1,0],
+            [0,0,1,0,0,1],
+            [0,0,0,1,0,0],
+            [0,0,0,0,1,0],
+            [0,0,0,0,0,1]], np.float32)
+    kalman.processNoiseCov = \
+        np.array([
+            [1,0,0,0,0,0],
+            [0,1,0,0,0,0],
+            [0,0,1,0,0,0],
+            [0,0,0,1,0,0],
+            [0,0,0,0,1,0],
+            [0,0,0,0,0,1]], np.float32) * 0.003
+    kalman.measurementNoiseCov = \
+        np.array([
+            [1,0,0],
+            [0,1,0],
+            [0,0,1]], np.float32) * 1
+
+    mes = traj.copy()
+    filtered_mes = []
+
+    for i in mes:
+        measurement = np.array([[np.float32(i[0])],[np.float32(i[1])],[np.float32(i[2])]])
+        kalman.correct(measurement)
+        prediction = kalman.predict()
+        filtered_mes.append([*prediction[0], *prediction[1], *prediction[2]])
+    
+    return filtered_mes
+
+
+def kalman_pred(traj: list) -> list:
+    trajectory = traj.copy()
+    for i in range(100):
+        if trajectory[i] != None:
+            trajectory[0] = trajectory[i]
+            break
+    for i in range(1,100):
+        if trajectory[-i] != None:
+            trajectory[-1] = trajectory[-i]
+            break
+
+    kalman = KalmanFilter(6,3)
+
+    kalman.measurementMatrix = \
+        np.array([
+            [1,0,0,0,0,0],
+            [0,1,0,0,0,0],
+            [0,0,1,0,0,0]], np.float32)
+    kalman.transitionMatrix = \
+        np.array([
+            [1,0,0,1,0,0],
+            [0,1,0,0,1,0],
+            [0,0,1,0,0,1],
+            [0,0,0,1,0,0],
+            [0,0,0,0,1,0],
+            [0,0,0,0,0,1]], np.float32)
+    kalman.processNoiseCov = \
+        np.array([
+            [1,0,0,0,0,0],
+            [0,1,0,0,0,0],
+            [0,0,1,0,0,0],
+            [0,0,0,1,0,0],
+            [0,0,0,0,1,0],
+            [0,0,0,0,0,1]], np.float32) *0.01 #* 0.003
+    kalman.measurementNoiseCov = \
+        np.array([
+            [1,0,0],
+            [0,1,0],
+            [0,0,1]], np.float32) * 1
+
+    filtered_mes = []
+    last_pre = np.array(([0],[0],[0],[0],[0],[0]), np.float32)
+    for i in trajectory:
+        if i != None:
+            measurement = np.array([[np.float32(i[0])],[np.float32(i[1])],[np.float32(i[2])]])
+            kalman.correct(measurement)
+        else:
+            measurement = last_pre
+        prediction = kalman.predict()
+        filtered_mes.append([*last_pre[0], *last_pre[1], *last_pre[2]])
+        last_pre = prediction
+    
+    return filtered_mes
+
