@@ -1,8 +1,7 @@
 import open3d as o3d
 import time
 import numpy as np
-from measure import distance_eval
-from measure import interpolate
+from measure import *
 
 import optitrack.csv_reader as csv
 
@@ -11,8 +10,8 @@ FRAMERATE = 120
 # Select take 
 
 # filename = "Takes\Basket-Marco-Interaction.csv" ## Handling
-filename = "Takes\Basket-Marco-Interaction_001.csv" ## Dribles
-filename = "Takes\Basket-Marco-Interaction_002.csv" ## Shot
+#filename = "Takes\Basket-Marco-Interaction_001.csv" ## Dribles
+# filename = "Takes\Basket-Marco-Interaction_002.csv" ## Shot
 filename = "Takes\Basket-Marco-Interaction_003.csv" ## Under legs
 # filename = "Takes\Basket-Marco-Interaction_004.csv" ## Too much corrupted!!
 
@@ -21,7 +20,6 @@ take = csv.Take().readCSV(filename)
 print("Found rigid bodies:", take.rigid_bodies.keys())
 
 body = take.rigid_bodies.copy()
-
 ball = {'Ball': take.rigid_bodies['Ball']}
 body.pop('Ball')
 
@@ -33,16 +31,16 @@ bones_pos = []
 if len(body) > 0:
     for body in body: 
         bones = take.rigid_bodies[body]
-        bones_pos.append(bones.positions)
+        bones = interpolate(bones.positions)
+        #bones = kalman_filt(bones)
+        #bones = kalman_pred(bones.positions)
+        #bones = bones.positions
+        bones_pos.append(bones)
 
-bones_pos = np.array(bones_pos).T.tolist()
 
-# Checking for the first non-corrupted position
-for i in range(100):
-    if None not in bones_pos[i]:
-        print(f"Body starting from position {i}")
-        bone_joint = bones_pos[i]
-        break
+bones_pos = np.array(bones_pos).transpose(1,0,2).tolist()
+
+bone_joint = bones_pos[0]
 
 # Generation of the skeleton
 colors = [[1, 0, 0] for i in range(len(body_edges))]
@@ -55,7 +53,7 @@ skeleton_joints.points = o3d.utility.Vector3dVector(bone_joint)
 center_skel = skeleton_joints.get_center()
 skeleton_joints.points = o3d.utility.Vector3dVector(bone_joint)
 skeleton_joints.lines = o3d.utility.Vector2iVector(body_edges)
-#skeleton_joints.colors = o3d.utility.Vector3dVector(colors)
+skeleton_joints.colors = o3d.utility.Vector3dVector(colors)
 
 # Ball instantiation
 
@@ -67,14 +65,12 @@ if len(ball) > 0:
 
 ball_pos = np.array(ball_pos).T.tolist()
 
-ball_pos = interpolate(ball_pos)
+ball_pos = interpolate(ball_pos) # Linear interpolation
+#ball_pos = kalman_filt(ball_pos) # Kalman filtering
+#ball_pos = kalman_pred(ball_pos) # Interpolation with Kalman
 
-# Checking for the first non-corrupted position
-for i in range(100):
-    if ball_pos[i] != None:
-        print(f"Ball starting from position {i}")
-        ball_joint = ball_pos[i]
-        break
+
+ball_joint = ball_pos[0]
 
 # Keypoint sequence for the trajectory
 trajectory_edges = []
@@ -107,6 +103,7 @@ missed_ball = 0
 missed_body = 0
 ball_update = 0
 trajectory = []
+body_trajectory = []
 trajectory.append(ball_joint)
 max_speed = 0
 
@@ -130,7 +127,7 @@ for i in range(len(bones_pos)):
         trajectory_edges.append([frame_count-1, frame_count])
 
         # Count for corrupted measurements
-        #print(f"Missed ball: {missed_ball}/{frame_count}, Missed body: {missed_body}/{frame_count}")
+        # print(f"Missed ball: {missed_ball}/{frame_count}, Missed body: {missed_body}/{frame_count}")
 
         # Size of the speed average window
         RESOLUTION = 10
@@ -140,7 +137,7 @@ for i in range(len(bones_pos)):
             speed = distance/t
             if speed > max_speed:
                 max_speed = speed
-            print(f"Ball speed {speed} [m/s]")
+            #print(f"Ball speed {speed} [m/s]")
 
         skeleton_joints.points = o3d.utility.Vector3dVector(new_joints)
         keypoints.points = o3d.utility.Vector3dVector(new_joints)

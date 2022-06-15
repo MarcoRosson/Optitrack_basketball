@@ -43,7 +43,7 @@ def interpolate(traj: list) -> list:
                 start_key = key
             missing += 1
             interpolated_traj.append([0, 0, 0])
-        
+
     return interpolated_traj
 
 def kalman_filt(traj: list) -> list:
