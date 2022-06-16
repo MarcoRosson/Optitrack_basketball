@@ -26,6 +26,9 @@ body.pop('Ball')
 body_edges = [[0,1],[1,2],[2,3],[3,4],[3,5],[5,6],[6,7],[7,8],[3,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],
                 [0,16],[16,17],[17,18],[18,20],[15,19]]
 
+LFHand = 8
+RHand = 12
+
 # Skeleton instantiation 
 bones_pos = []
 if len(body) > 0:
@@ -96,6 +99,13 @@ vis.add_geometry(keypoints)
 vis.add_geometry(ball_keypoint)
 vis.add_geometry(ball_trajectory)
 
+ball = o3d.geometry.TriangleMesh.create_sphere(radius = 0.1)
+translation = np.array(ball_joint, np.float64)
+ball.translate(translation)
+ball_color = np.array([1,0.5,0], np.float64)
+ball.paint_uniform_color(ball_color)
+print(ball.has_vertex_colors())
+vis.add_geometry(ball)
 time.sleep(2)
 
 frame_count = 0
@@ -106,6 +116,8 @@ trajectory = []
 body_trajectory = []
 trajectory.append(ball_joint)
 max_speed = 0
+contacts = 0
+touch = False
 
 
 for i in range(len(bones_pos)):
@@ -122,6 +134,18 @@ for i in range(len(bones_pos)):
             new_joints = bones_pos[i]
         else:
             missed_body += 1
+
+        left_hand = new_joints[LFHand]
+        right_hand = new_joints[RHand]
+
+        left_dist = distance_eval([left_hand, ball_joint])
+        right_dist = distance_eval([right_hand, ball_joint])
+        if left_dist < 0.3 or right_dist < 0.3:
+            if touch == False:
+                contacts += 1
+            touch = True
+        else:
+            touch = False
 
         trajectory.append(ball_joint)
         trajectory_edges.append([frame_count-1, frame_count])
@@ -145,11 +169,15 @@ for i in range(len(bones_pos)):
         ball_trajectory.points = o3d.utility.Vector3dVector(trajectory)
         ball_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
 
+        translation = np.array(ball_joint, np.float64)
+        ball.translate(translation, relative = False)
+
         # Update of skeleton and ball
         vis.update_geometry(skeleton_joints)
         vis.update_geometry(keypoints)
         vis.update_geometry(ball_keypoint)
         vis.update_geometry(ball_trajectory)
+        vis.update_geometry(ball)
         
         vis.update_renderer()
         vis.poll_events()
