@@ -10,9 +10,9 @@ FRAMERATE = 120
 # Select take 
 
 # filename = "Takes\Basket-Marco-Interaction.csv" ## Handling
-#filename = "Takes\Basket-Marco-Interaction_001.csv" ## Dribles
+filename = "Takes\Basket-Marco-Interaction_001.csv" ## Dribles
 # filename = "Takes\Basket-Marco-Interaction_002.csv" ## Shot
-filename = "Takes\Basket-Marco-Interaction_003.csv" ## Under legs
+# filename = "Takes\Basket-Marco-Interaction_003.csv" ## Under legs
 # filename = "Takes\Basket-Marco-Interaction_004.csv" ## Too much corrupted!!
 
 take = csv.Take().readCSV(filename)
@@ -26,8 +26,9 @@ body.pop('Ball')
 body_edges = [[0,1],[1,2],[2,3],[3,4],[3,5],[5,6],[6,7],[7,8],[3,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],
                 [0,16],[16,17],[17,18],[18,20],[15,19]]
 
-LFHand = 8
-RHand = 12
+LFHAND = 8
+RHAND = 12
+HIP = 0
 
 # Skeleton instantiation 
 bones_pos = []
@@ -35,7 +36,7 @@ if len(body) > 0:
     for body in body: 
         bones = take.rigid_bodies[body]
         bones = interpolate(bones.positions)
-        #bones = kalman_filt(bones)
+        bones = kalman_filt(bones)
         #bones = kalman_pred(bones.positions)
         #bones = bones.positions
         bones_pos.append(bones)
@@ -86,6 +87,9 @@ ball_keypoint.colors = o3d.utility.Vector3dVector([color])
 ball_trajectory = o3d.geometry.LineSet()
 ball_trajectory.points = o3d.utility.Vector3dVector([ball_joint])
 ball_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
+body_trajectory = o3d.geometry.LineSet()
+body_trajectory.points = o3d.utility.Vector3dVector([bone_joint[HIP]])
+body_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
 
 vis = o3d.visualization.Visualizer()
 
@@ -98,13 +102,13 @@ vis.add_geometry(skeleton_joints)
 vis.add_geometry(keypoints)
 vis.add_geometry(ball_keypoint)
 vis.add_geometry(ball_trajectory)
+vis.add_geometry(body_trajectory)
 
 ball = o3d.geometry.TriangleMesh.create_sphere(radius = 0.1)
 translation = np.array(ball_joint, np.float64)
 ball.translate(translation)
 ball_color = np.array([1,0.5,0], np.float64)
 ball.paint_uniform_color(ball_color)
-print(ball.has_vertex_colors())
 vis.add_geometry(ball)
 time.sleep(2)
 
@@ -112,12 +116,15 @@ frame_count = 0
 missed_ball = 0
 missed_body = 0
 ball_update = 0
-trajectory = []
-body_trajectory = []
-trajectory.append(ball_joint)
+ball_traj = []
+ball_traj.append(ball_joint)
+body_traj = []
+body_traj.append(bone_joint[HIP])
 max_speed = 0
 contacts = 0
 touch = False
+bounces = 0
+ground_touch = False
 
 
 for i in range(len(bones_pos)):
@@ -135,8 +142,8 @@ for i in range(len(bones_pos)):
         else:
             missed_body += 1
 
-        left_hand = new_joints[LFHand]
-        right_hand = new_joints[RHand]
+        left_hand = new_joints[LFHAND]
+        right_hand = new_joints[RHAND]
 
         left_dist = distance_eval([left_hand, ball_joint])
         right_dist = distance_eval([right_hand, ball_joint])
@@ -147,8 +154,16 @@ for i in range(len(bones_pos)):
         else:
             touch = False
 
-        trajectory.append(ball_joint)
+        if ball_joint[1] < 0.15:
+            if ground_touch == False:
+                bounces += 1
+            ground_touch = True
+        else:
+            ground_touch = False
+
+        ball_traj.append(ball_joint)
         trajectory_edges.append([frame_count-1, frame_count])
+        body_traj.append(new_joints[HIP])
 
         # Count for corrupted measurements
         # print(f"Missed ball: {missed_ball}/{frame_count}, Missed body: {missed_body}/{frame_count}")
@@ -157,17 +172,23 @@ for i in range(len(bones_pos)):
         RESOLUTION = 10
         if frame_count % RESOLUTION == 0 and frame_count != 0:
             t = (RESOLUTION/FRAMERATE)
-            distance = distance_eval(trajectory[frame_count-RESOLUTION+1:frame_count])
+            distance = distance_eval(ball_traj[frame_count-RESOLUTION+1:frame_count])
+            body_distance = distance_eval(body_traj[frame_count-RESOLUTION+1:frame_count])
             speed = distance/t
+            body_speed = body_distance/t
             if speed > max_speed:
                 max_speed = speed
             #print(f"Ball speed {speed} [m/s]")
+            print(body_speed)
 
         skeleton_joints.points = o3d.utility.Vector3dVector(new_joints)
         keypoints.points = o3d.utility.Vector3dVector(new_joints)
         ball_keypoint.points = o3d.utility.Vector3dVector([ball_joint])
-        ball_trajectory.points = o3d.utility.Vector3dVector(trajectory)
+        ball_trajectory.points = o3d.utility.Vector3dVector(ball_traj)
         ball_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
+        body_trajectory.points = o3d.utility.Vector3dVector(body_traj)
+        body_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
+
 
         translation = np.array(ball_joint, np.float64)
         ball.translate(translation, relative = False)
@@ -177,6 +198,7 @@ for i in range(len(bones_pos)):
         vis.update_geometry(keypoints)
         vis.update_geometry(ball_keypoint)
         vis.update_geometry(ball_trajectory)
+        vis.update_geometry(body_trajectory)
         vis.update_geometry(ball)
         
         vis.update_renderer()
@@ -187,6 +209,6 @@ for i in range(len(bones_pos)):
 vis.run()
 
 t = (len(bones_pos)/FRAMERATE)
-distance = distance_eval(trajectory)
+distance = distance_eval(ball_traj)
 average_speed = distance/t
 print(f"The ball traveled for {distance} [m], with and average speed of {average_speed} [m/s], and a max speed of {max_speed} [m/s]")

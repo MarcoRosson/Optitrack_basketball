@@ -79,10 +79,14 @@ def kalman_filt(traj: list) -> list:
     mes = traj.copy()
     filtered_mes = []
 
+    cycle = 0
     for i in mes:
         measurement = np.array([[np.float32(i[0])],[np.float32(i[1])],[np.float32(i[2])]])
         kalman.correct(measurement)
         prediction = kalman.predict()
+        if cycle < 50:
+            prediction = measurement
+            cycle += 1
         filtered_mes.append([*prediction[0], *prediction[1], *prediction[2]])
     
     return filtered_mes
