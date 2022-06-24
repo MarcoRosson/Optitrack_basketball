@@ -30,16 +30,31 @@ LFHAND = 8
 RHAND = 12
 HIP = 0
 
+interpolation = ['Linear interpolation', 'Linear interpolation+Kalman Filter', 'Kalman predictor']
+while True:
+    print('What kind of interpolation do you want to use?:')
+    for i, inter in enumerate(interpolation):
+        print(i, inter)
+    choice = input()
+    if choice.isnumeric():
+        choice = int(choice)
+        if 0 <= choice < len(interpolation):
+            interpolation = interpolation[choice]
+            break
+
+print(interpolation)
+
 # Skeleton instantiation 
 bones_pos = []
 if len(body) > 0:
     for body in body: 
         bones = take.rigid_bodies[body]
-        bones = interpolate(bones.positions)
-        bones = kalman_filt(bones)
-        #bones = kalman_pred(bones.positions)
-        #bones = bones.positions
-        bones_pos.append(bones)
+        if interpolation == 'Linear interpolation':
+            bones_pos.append(interpolate(bones.positions))
+        if interpolation == 'Linear interpolation+Kalman Filter':
+            bones_pos.append(kalman_filt(interpolate(bones.positions)))
+        if interpolation == 'Kalman predictor':
+            bones_pos.append(kalman_pred(bones.positions))
 
 
 bones_pos = np.array(bones_pos).transpose(1,0,2).tolist()
@@ -69,10 +84,18 @@ if len(ball) > 0:
 
 ball_pos = np.array(ball_pos).T.tolist()
 
-ball_pos = interpolate(ball_pos) # Linear interpolation
-#ball_pos = kalman_filt(ball_pos) # Kalman filtering
-#ball_pos = kalman_pred(ball_pos) # Interpolation with Kalman
 
+
+ball_inter = interpolate(ball_pos) # Linear interpolation
+ball_kal_filt = kalman_filt(ball_inter) # Kalman filtering
+ball_kal_pred = kalman_pred(ball_pos) # Interpolation with Kalman
+
+if interpolation == 'Linear interpolation':
+    ball_pos = ball_inter
+if interpolation == 'Linear interpolation+Kalman Filter':
+    ball_pos = ball_kal_filt
+if interpolation == 'Kalman predictor':
+    ball_pos = ball_kal_pred
 
 ball_joint = ball_pos[0]
 
@@ -179,7 +202,7 @@ for i in range(len(bones_pos)):
             if speed > max_speed:
                 max_speed = speed
             #print(f"Ball speed {speed} [m/s]")
-            print(body_speed)
+            #print(body_speed)
 
         skeleton_joints.points = o3d.utility.Vector3dVector(new_joints)
         keypoints.points = o3d.utility.Vector3dVector(new_joints)

@@ -103,6 +103,7 @@ def kalman_pred(traj: list) -> list:
             trajectory[-1] = trajectory[-i]
             break
 
+    trajectory[:50] = interpolate(trajectory[:50])
     kalman = KalmanFilter(6,3)
 
     kalman.measurementMatrix = \
@@ -133,14 +134,19 @@ def kalman_pred(traj: list) -> list:
             [0,0,1]], np.float32) * 1
 
     filtered_mes = []
-    last_pre = np.array(([0],[0],[0],[0],[0],[0]), np.float32)
+    last_pre = np.array(([trajectory[0][0]],[trajectory[0][1]],[trajectory[0][2]],[0],[0],[0]), np.float32)
+    cycle = 0
     for i in trajectory:
         if i != None:
             measurement = np.array([[np.float32(i[0])],[np.float32(i[1])],[np.float32(i[2])]])
             kalman.correct(measurement)
         else:
             measurement = last_pre
+            
         prediction = kalman.predict()
+        if cycle < 50:
+            prediction = measurement
+            cycle += 1
         filtered_mes.append([*last_pre[0], *last_pre[1], *last_pre[2]])
         last_pre = prediction
     
