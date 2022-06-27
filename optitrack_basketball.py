@@ -2,15 +2,11 @@ import open3d as o3d
 import time
 import numpy as np
 from measure import *
-import os
 import sys
 
 import optitrack.csv_reader as csv
 
 FRAMERATE = 120
-
-def clear():
-    os.system( 'cls' )
 
 # Select take 
 
@@ -140,7 +136,7 @@ ball.paint_uniform_color(ball_color)
 vis.add_geometry(ball)
 time.sleep(2)
 
-frame_count = 0
+i = 0
 missed_ball = 0
 missed_body = 0
 ball_update = 0
@@ -154,9 +150,9 @@ touch = False
 bounces = 0
 ground_touch = False
 
+print("\n"*7)
 
 for i in range(len(bones_pos)):
-    frame_count += 1
     # If the measurements are correct the model updates
     if ball_pos[i] != None:
         ball_joint = ball_pos[i]
@@ -188,7 +184,7 @@ for i in range(len(bones_pos)):
         ground_touch = False
 
     ball_traj.append(ball_joint)
-    trajectory_edges.append([frame_count-1, frame_count])
+    trajectory_edges.append([i, i+1])
     body_traj.append(new_joints[HIP])
 
     # Count for corrupted measurements
@@ -196,21 +192,27 @@ for i in range(len(bones_pos)):
 
     # Size of the speed average window
     RESOLUTION = 10
-    if frame_count % RESOLUTION == 0 and frame_count != 0:
+    if i % RESOLUTION == 0 and i != 0:
         t = (RESOLUTION/FRAMERATE)
-        distance = distance_eval(ball_traj[frame_count-RESOLUTION+1:frame_count])
-        body_distance = distance_eval(body_traj[frame_count-RESOLUTION+1:frame_count])
+        distance = distance_eval(ball_traj[i-RESOLUTION+1:i])
+        body_distance = distance_eval(body_traj[i-RESOLUTION+1:i])
         speed = distance/t
         body_speed = body_distance/t
         if speed > max_speed:
             max_speed = speed
-        #clear()
-        for _ in range(4):
+        difference_interpolation = path_difference(ball_pos[i-RESOLUTION+1:i], ball_inter[i-RESOLUTION+1:i])
+        difference_filt = path_difference(ball_pos[i-RESOLUTION+1:i], ball_kal_filt[i-RESOLUTION+1:i])
+        difference_kal_pred = path_difference(ball_pos[i-RESOLUTION+1:i], ball_kal_pred[i-RESOLUTION+1:i])
+        for _ in range(8):
             sys.stdout.write("\x1b[1A\x1b[2K")
         print(f"Ball speed: {speed} [m/s]")
         print(f"Body speed: {body_speed} [m/s]")
         print(f"Bounces: {bounces}")
         print(f"Hand contacts: {contacts}")
+        print(f"""Path differences: 
+Linear interpolation: {difference_interpolation}
+Linear interpolation+Kalman Filter: {difference_filt}
+Kalman predictor: {difference_kal_pred}""")
 
     skeleton_joints.points = o3d.utility.Vector3dVector(new_joints)
     keypoints.points = o3d.utility.Vector3dVector(new_joints)

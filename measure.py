@@ -10,6 +10,16 @@ def distance_eval(traj: list) -> int:
         distance += np.sqrt((x0-x1)**2 + (y0-y1)**2 + (z0-z1)**2)
     return distance
 
+def path_difference(traj1: list, traj2: list) -> int:
+    difference = 0
+    for key, point in enumerate(traj1):
+        x0, y0, z0 = traj1[key]
+        x1, y1, z1 = traj2[key]
+        traj_diff = np.sqrt((x0-x1)**2 + (y0-y1)**2 + (z0-z1)**2)
+        difference = difference + traj_diff
+    difference = difference/(distance_eval(traj1))
+    return difference
+
 def interpolate(traj: list) -> list:
     trajectory = traj.copy()
     for i in range(100):
@@ -78,16 +88,17 @@ def kalman_filt(traj: list) -> list:
 
     mes = traj.copy()
     filtered_mes = []
-
+    last_prediction = 0
     cycle = 0
     for i in mes:
         measurement = np.array([[np.float32(i[0])],[np.float32(i[1])],[np.float32(i[2])]])
         kalman.correct(measurement)
         prediction = kalman.predict()
         if cycle < 50:
-            prediction = measurement
+            last_prediction = measurement
             cycle += 1
-        filtered_mes.append([*prediction[0], *prediction[1], *prediction[2]])
+        filtered_mes.append([*last_prediction[0], *last_prediction[1], *last_prediction[2]])
+        last_prediction = prediction
     
     return filtered_mes
 
