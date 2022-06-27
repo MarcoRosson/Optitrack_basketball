@@ -2,10 +2,15 @@ import open3d as o3d
 import time
 import numpy as np
 from measure import *
+import os
+import sys
 
 import optitrack.csv_reader as csv
 
 FRAMERATE = 120
+
+def clear():
+    os.system( 'cls' )
 
 # Select take 
 
@@ -151,83 +156,86 @@ ground_touch = False
 
 
 for i in range(len(bones_pos)):
-    #To reduce the framerate (Will affect trajectory resolution and Ball speed)
-    if i%1 == 0:
-        frame_count += 1
-        # If the measurements are correct the model updates
-        if ball_pos[i] != None:
-            ball_joint = ball_pos[i]
-            ball_update += 1
-        else:
-            missed_ball += 1
-        if None not in bones_pos[i]:
-            new_joints = bones_pos[i]
-        else:
-            missed_body += 1
+    frame_count += 1
+    # If the measurements are correct the model updates
+    if ball_pos[i] != None:
+        ball_joint = ball_pos[i]
+        ball_update += 1
+    else:
+        missed_ball += 1
+    if None not in bones_pos[i]:
+        new_joints = bones_pos[i]
+    else:
+        missed_body += 1
 
-        left_hand = new_joints[LFHAND]
-        right_hand = new_joints[RHAND]
+    left_hand = new_joints[LFHAND]
+    right_hand = new_joints[RHAND]
 
-        left_dist = distance_eval([left_hand, ball_joint])
-        right_dist = distance_eval([right_hand, ball_joint])
-        if left_dist < 0.3 or right_dist < 0.3:
-            if touch == False:
-                contacts += 1
-            touch = True
-        else:
-            touch = False
+    left_dist = distance_eval([left_hand, ball_joint])
+    right_dist = distance_eval([right_hand, ball_joint])
+    if left_dist < 0.3 or right_dist < 0.3:
+        if touch == False:
+            contacts += 1
+        touch = True
+    else:
+        touch = False
 
-        if ball_joint[1] < 0.15:
-            if ground_touch == False:
-                bounces += 1
-            ground_touch = True
-        else:
-            ground_touch = False
+    if ball_joint[1] < 0.15:
+        if ground_touch == False:
+            bounces += 1
+        ground_touch = True
+    else:
+        ground_touch = False
 
-        ball_traj.append(ball_joint)
-        trajectory_edges.append([frame_count-1, frame_count])
-        body_traj.append(new_joints[HIP])
+    ball_traj.append(ball_joint)
+    trajectory_edges.append([frame_count-1, frame_count])
+    body_traj.append(new_joints[HIP])
 
-        # Count for corrupted measurements
-        # print(f"Missed ball: {missed_ball}/{frame_count}, Missed body: {missed_body}/{frame_count}")
+    # Count for corrupted measurements
+    # print(f"Missed ball: {missed_ball}/{frame_count}, Missed body: {missed_body}/{frame_count}")
 
-        # Size of the speed average window
-        RESOLUTION = 10
-        if frame_count % RESOLUTION == 0 and frame_count != 0:
-            t = (RESOLUTION/FRAMERATE)
-            distance = distance_eval(ball_traj[frame_count-RESOLUTION+1:frame_count])
-            body_distance = distance_eval(body_traj[frame_count-RESOLUTION+1:frame_count])
-            speed = distance/t
-            body_speed = body_distance/t
-            if speed > max_speed:
-                max_speed = speed
-            #print(f"Ball speed {speed} [m/s]")
-            #print(body_speed)
+    # Size of the speed average window
+    RESOLUTION = 10
+    if frame_count % RESOLUTION == 0 and frame_count != 0:
+        t = (RESOLUTION/FRAMERATE)
+        distance = distance_eval(ball_traj[frame_count-RESOLUTION+1:frame_count])
+        body_distance = distance_eval(body_traj[frame_count-RESOLUTION+1:frame_count])
+        speed = distance/t
+        body_speed = body_distance/t
+        if speed > max_speed:
+            max_speed = speed
+        #clear()
+        for _ in range(4):
+            sys.stdout.write("\x1b[1A\x1b[2K")
+        print(f"Ball speed: {speed} [m/s]")
+        print(f"Body speed: {body_speed} [m/s]")
+        print(f"Bounces: {bounces}")
+        print(f"Hand contacts: {contacts}")
 
-        skeleton_joints.points = o3d.utility.Vector3dVector(new_joints)
-        keypoints.points = o3d.utility.Vector3dVector(new_joints)
-        ball_keypoint.points = o3d.utility.Vector3dVector([ball_joint])
-        ball_trajectory.points = o3d.utility.Vector3dVector(ball_traj)
-        ball_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
-        body_trajectory.points = o3d.utility.Vector3dVector(body_traj)
-        body_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
+    skeleton_joints.points = o3d.utility.Vector3dVector(new_joints)
+    keypoints.points = o3d.utility.Vector3dVector(new_joints)
+    ball_keypoint.points = o3d.utility.Vector3dVector([ball_joint])
+    ball_trajectory.points = o3d.utility.Vector3dVector(ball_traj)
+    ball_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
+    body_trajectory.points = o3d.utility.Vector3dVector(body_traj)
+    body_trajectory.lines = o3d.utility.Vector2iVector(trajectory_edges)
 
 
-        translation = np.array(ball_joint, np.float64)
-        ball.translate(translation, relative = False)
+    translation = np.array(ball_joint, np.float64)
+    ball.translate(translation, relative = False)
 
-        # Update of skeleton and ball
-        vis.update_geometry(skeleton_joints)
-        vis.update_geometry(keypoints)
-        vis.update_geometry(ball_keypoint)
-        vis.update_geometry(ball_trajectory)
-        vis.update_geometry(body_trajectory)
-        vis.update_geometry(ball)
-        
-        vis.update_renderer()
-        vis.poll_events()
+    # Update of skeleton and ball
+    vis.update_geometry(skeleton_joints)
+    vis.update_geometry(keypoints)
+    vis.update_geometry(ball_keypoint)
+    vis.update_geometry(ball_trajectory)
+    vis.update_geometry(body_trajectory)
+    vis.update_geometry(ball)
+    
+    vis.update_renderer()
+    vis.poll_events()
 
-        #time.sleep(0.05)
+    #time.sleep(0.05)
     
 vis.run()
 
