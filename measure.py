@@ -1,6 +1,7 @@
 import numpy as np
 from numpy import float32, round
 from cv2 import KalmanFilter
+from traitlets import Bool
 
 def distance_eval(traj: list) -> int:
     distance = 0
@@ -55,6 +56,42 @@ def interpolate(traj: list) -> list:
             interpolated_traj.append([0, 0, 0])
 
     return interpolated_traj
+
+def fill_gaps(traj: list, return_missing: Bool = False):
+    """Fills the gaps in a list with None with the previous values.
+    Args:
+        list: the list to fill
+        Bool: set to True to return missing frames
+    Retruns:
+        list: the filled list
+        str: the number of gaps present in the original list
+    """
+    trajectory = traj.copy()
+    filled_traj = []
+    missed = 0
+    total = len(trajectory)
+    for i in range(100):
+        if trajectory[i] != None:
+            trajectory[0] = trajectory[i]
+            break
+        if i == 0:
+            missed += 1
+    for i in range(1,100):
+        if trajectory[-i] != None:
+            trajectory[-1] = trajectory[-i]
+            break
+        if i == 1:
+            missed += 1
+    
+    for key, point in enumerate(trajectory):
+        if point == None:
+            trajectory[key] = trajectory[key-1]
+            missed += 1
+    
+    missing = "Missed ball frames: " + str(missed) + "/" + str(total)
+    if return_missing:
+        return trajectory, missing
+    return trajectory
 
 def kalman_filt(traj: list) -> list:
     kalman = KalmanFilter(6,3)
@@ -162,4 +199,3 @@ def kalman_pred(traj: list) -> list:
         last_pre = prediction
     
     return filtered_mes
-

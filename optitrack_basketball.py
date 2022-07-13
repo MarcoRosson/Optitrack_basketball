@@ -6,13 +6,13 @@ import sys
 
 import optitrack.csv_reader as csv
 
-FRAMERATE = 120
+FRAMERATE = 360
 
 # Select take 
 
 # filename = "Takes\Basket-Marco-Interaction.csv" ## Handling
-filename = "Takes\Basket-Marco-Interaction_001.csv" ## Dribles
-# filename = "Takes\Basket-Marco-Interaction_002.csv" ## Shot
+# filename = "Takes\Basket-Marco-Interaction_001.csv" ## Dribles
+filename = "Takes\Basket-Marco-Interaction_002.csv" ## Shot
 # filename = "Takes\Basket-Marco-Interaction_003.csv" ## Under legs
 # filename = "Takes\Basket-Marco-Interaction_004.csv" ## Too much corrupted!!
 
@@ -21,7 +21,7 @@ take = csv.Take().readCSV(filename)
 print("Found rigid bodies:", take.rigid_bodies.keys())
 
 body = take.rigid_bodies.copy()
-ball = {'Ball': take.rigid_bodies['Ball']}
+ball = take.rigid_bodies['Ball']
 body.pop('Ball')
 
 body_edges = [[0,1],[1,2],[2,3],[3,4],[3,5],[5,6],[6,7],[7,8],[3,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],
@@ -31,7 +31,7 @@ LFHAND = 8
 RHAND = 12
 HIP = 0
 
-interpolation = ['Linear interpolation', 'Linear interpolation+Kalman Filter', 'Kalman predictor']
+interpolation = ['Linear interpolation', 'Linear interpolation+Kalman Filter', 'Kalman predictor', 'No interpolation']
 while True:
     print('What kind of interpolation do you want to use?:')
     for i, inter in enumerate(interpolation):
@@ -56,6 +56,8 @@ if len(body) > 0:
             bones_pos.append(kalman_filt(interpolate(bones.positions)))
         if interpolation == 'Kalman predictor':
             bones_pos.append(kalman_pred(bones.positions))
+        if interpolation == 'No interpolation':
+            bones_pos.append(fill_gaps(bones.positions))
 
 
 bones_pos = np.array(bones_pos).transpose(1,0,2).tolist()
@@ -77,19 +79,15 @@ skeleton_joints.colors = o3d.utility.Vector3dVector(colors)
 
 # Ball instantiation
 
-ball_pos = []
-if len(ball) > 0:
-    for ball in ball: 
-        b = take.rigid_bodies[ball]
-        ball_pos = b.positions
+ball_pos = ball.positions
 
 ball_pos = np.array(ball_pos).T.tolist()
-
 
 
 ball_inter = interpolate(ball_pos) # Linear interpolation
 ball_kal_filt = kalman_filt(ball_inter) # Kalman filtering
 ball_kal_pred = kalman_pred(ball_pos) # Interpolation with Kalman
+ball_filled = fill_gaps(ball_pos) # No interpolation
 
 if interpolation == 'Linear interpolation':
     ball_pos = ball_inter
@@ -97,6 +95,8 @@ if interpolation == 'Linear interpolation+Kalman Filter':
     ball_pos = ball_kal_filt
 if interpolation == 'Kalman predictor':
     ball_pos = ball_kal_pred
+if interpolation == 'No interpolation':
+    ball_pos = ball_filled
 
 ball_joint = ball_pos[0]
 
@@ -150,10 +150,12 @@ touch = False
 bounces = 0
 ground_touch = False
 
-print("\n"*7)
+print("\n"*8)
+
 
 for i in range(len(bones_pos)):
     # If the measurements are correct the model updates
+
     if ball_pos[i] != None:
         ball_joint = ball_pos[i]
         ball_update += 1
@@ -203,7 +205,8 @@ for i in range(len(bones_pos)):
         difference_interpolation = path_difference(ball_pos[i-RESOLUTION+1:i], ball_inter[i-RESOLUTION+1:i])
         difference_filt = path_difference(ball_pos[i-RESOLUTION+1:i], ball_kal_filt[i-RESOLUTION+1:i])
         difference_kal_pred = path_difference(ball_pos[i-RESOLUTION+1:i], ball_kal_pred[i-RESOLUTION+1:i])
-        for _ in range(8):
+        difference_filled = path_difference(ball_pos[i-RESOLUTION+1:i], ball_filled[i-RESOLUTION+1:i])
+        for _ in range(9):
             sys.stdout.write("\x1b[1A\x1b[2K")
         print(f"Ball speed: {speed} [m/s]")
         print(f"Body speed: {body_speed} [m/s]")
@@ -212,7 +215,8 @@ for i in range(len(bones_pos)):
         print(f"""Path differences: 
 Linear interpolation: {difference_interpolation}
 Linear interpolation+Kalman Filter: {difference_filt}
-Kalman predictor: {difference_kal_pred}""")
+Kalman predictor: {difference_kal_pred}
+No interpolation: {difference_filled}""")
 
     skeleton_joints.points = o3d.utility.Vector3dVector(new_joints)
     keypoints.points = o3d.utility.Vector3dVector(new_joints)
