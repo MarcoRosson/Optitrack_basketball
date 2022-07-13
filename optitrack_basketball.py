@@ -8,17 +8,29 @@ import optitrack.csv_reader as csv
 
 FRAMERATE = 360
 
-# Select take 
+while True:
+    print(f"""Select the take:
+0 - Ball Handling
+1 - Dribbles
+2 - Shot
+3 - Under The Legs
+""")
+    take = input()
 
-# filename = "Takes\Basket-Marco-Interaction.csv" ## Handling
-# filename = "Takes\Basket-Marco-Interaction_001.csv" ## Dribles
-filename = "Takes\Basket-Marco-Interaction_002.csv" ## Shot
-# filename = "Takes\Basket-Marco-Interaction_003.csv" ## Under legs
-# filename = "Takes\Basket-Marco-Interaction_004.csv" ## Too much corrupted!!
+    if take == '0':
+        filename = "Takes\Basket-Marco-Interaction.csv" ## Handling
+        break
+    if take == '1':
+        filename = "Takes\Basket-Marco-Interaction_001.csv" ## Dribbles
+        break
+    if take == '2':
+        filename = "Takes\Basket-Marco-Interaction_002.csv" ## Shot
+        break
+    if take == '3':
+        filename = "Takes\Basket-Marco-Interaction_003.csv" ## Under legs
+        break
 
 take = csv.Take().readCSV(filename)
-
-print("Found rigid bodies:", take.rigid_bodies.keys())
 
 body = take.rigid_bodies.copy()
 ball = take.rigid_bodies['Ball']

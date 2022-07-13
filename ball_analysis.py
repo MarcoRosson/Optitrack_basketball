@@ -28,6 +28,22 @@ print(f"""Missed frame for every marker combination:
 14 Markers: {missing_14}
 """)
 
+difference_lin_kal = 0
+difference_lin_kal_pred = 0
+difference_kal_kal_pred = 0
+for i, _ in enumerate(ball_14_inter):
+    difference_lin_kal += distance_eval([ball_14_inter[i], ball_14_kal_filt[i]])
+    difference_lin_kal_pred += distance_eval([ball_14_inter[i], ball_14_kal_pred[i]])
+    difference_kal_kal_pred += distance_eval([ball_14_kal_pred[i], ball_14_kal_filt[i]])
+difference_lin_kal = difference_lin_kal/len(ball_14_inter)
+difference_lin_kal_pred = difference_lin_kal_pred/len(ball_14_inter)
+difference_kal_kal_pred = difference_kal_kal_pred/len(ball_14_inter)
+
+print(f"""Path average differences: 
+Linear Interpolation/Kalman Filter: {difference_lin_kal}
+Linear Interpolation/Kalman Predictor: {difference_lin_kal_pred}
+Kalman Filter/Kalman Predictor: {difference_kal_kal_pred}""")
+
 while True:
     print('0 - 3D Plot\n1 - 2D Plot')
     proj = input()
