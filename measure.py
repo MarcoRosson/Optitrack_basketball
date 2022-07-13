@@ -199,3 +199,26 @@ def kalman_pred(traj: list) -> list:
         last_pre = prediction
     
     return filtered_mes
+
+import optitrack.csv_reader as csv
+
+def read_ball(path: str, name: str, MAX_LENGTH):
+    ball = csv.Take().readCSV(path)
+    ball = ball.rigid_bodies[name]
+    ball = ball.positions
+    ball = np.array(ball).T.tolist()
+    ball = ball[:MAX_LENGTH]
+    return ball
+
+def ball_cordinates(ball_traj: list):
+    ball_x = []
+    ball_z = []
+    ball_y = []
+    for row in ball_traj:
+        ball_x.append(row[2])
+    for row in ball_traj:
+        ball_z.append(row[0])
+    for row in ball_traj:
+        ball_y.append(row[1])
+
+    return ball_x,ball_z,ball_y
