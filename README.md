@@ -2,13 +2,13 @@
 
 Optitrack basketball is a python program used to plot animations of a basketball player (skeleton + ball), taken with an OptiTrack motion capture system.
 
-The project is already provided with four takes of a basketball player doing basic movements, but other takes can be used, just adding them to the *filename* variable (in .csv format).
+The project is already provided with four takes of a basketball player doing basic movements, but other takes can be used, just by adding them to the *filename* variable (in .csv format).
 
 The program also deals with the problem of missing frames, providing three different types of interpolation to choose from.
 
 ## Installation
  
-In order to make the code work, some pakages need to be installed, if not already present:
+In order to make the code work, some packages need to be installed, if not already present:
 
 **Open3d**
 
@@ -42,7 +42,7 @@ The code have been tested with the following versions:
 
 To use the code, run the file 'optitrack_basketball.py'. 
 
-In the terminal, you have to select wich one of the embedded takes you want to run:
+In the terminal, you will have to select which one of the embedded takes you want to run:
 
 ```bash
 Select the take: 
@@ -61,8 +61,8 @@ What kind of interpolation do you want to use?:
 2 - Kalman predictor
 3 - No interpolation
 ```
-The animation would start in a new window.
-In the terminal wil be shown some information about the ball and its trajectory:
+The animation will start in a new window.
+In the terminal will be shown some information about the ball and its trajectory:
 
 ```bash
 Ball speed: 0.37329354903095924 [m/s]
@@ -80,7 +80,7 @@ No interpolation: 1.12656240908354
 
 The file 'ball_analysis.py' can be used to compare the behavior of the different interpolation techniques and to compare how the OptiTrack system works when different numbers of markers are applied.
 
-When you run the code, in the terminal will be displayed the frame lost for every combination of markers:
+When you run the code, in the terminal will be displayed the frames lost for every combination of markers:
 
 ```bash
 Missed frame for every marker combination:
@@ -98,7 +98,7 @@ Linear Interpolation/Kalman Predictor: 0.00182577228
 Kalman Filter/Kalman Predictor: 0.0006042764587
 ```
 
-Then, the program will ask the user which type of plot has to be shown. The '3D Plot' is better to have an overview on the trajectory, the '2D Plot' shows better the differences between the different types of trajectories.
+Then, the program will ask the user which type of plot has to be shown. The '3D Plot' gives an overview on the trajectory, the '2D Plot' shows better the differences between the different types of trajectories.
 
 ```bash
 0 - 3D Plot
