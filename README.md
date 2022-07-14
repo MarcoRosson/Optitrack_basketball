@@ -5,4 +5,3 @@ Optitrack basketball is a python program used to plot animations of a basketball
 The project is already provided with four takes of a basketball player doing basic movements, but other takes can be used, just adding them to the *filename* variable (in .csv format).
 
 ## Installation
-
