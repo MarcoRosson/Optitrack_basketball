@@ -4,6 +4,8 @@ Optitrack basketball is a python program used to plot animations of a basketball
 
 The project is already provided with four takes of a basketball player doing basic movements, but other takes can be used, just adding them to the *filename* variable (in .csv format).
 
+The program also deals with the problem of missing frames, providing three different types of interpolation to choose from.
+
 ## Installation
  
 In order to make the code work, some pakages need to be installed, if not already present:
@@ -69,8 +71,39 @@ Bounces: 0
 Hand contacts: 2
 Path differences:
 Linear interpolation: 0.0
-Linear interpolation+Kalman Filter: 0.36954737131135595
-Kalman predictor: 0.3860345593962202
-No interpolation: 1.1265624090835493
+Linear interpolation+Kalman Filter: 0.36954737131135
+Kalman predictor: 0.38603455939622
+No interpolation: 1.12656240908354
 ```
 
+## Ball analysis
+
+The file 'ball_analysis.py' can be used to compare the behavior of the different interpolation techniques and to compare how the OptiTrack system works when different numbers of markers are applied.
+
+When you run the code, in the terminal will be displayed the frame lost for every combination of markers:
+
+```bash
+Missed frame for every marker combination:
+6 Markers: Missed ball frames: 1443/3400,
+10 Markers: Missed ball frames: 1381/3400,
+14 Markers: Missed ball frames: 1497/3400
+```
+
+and the average displacement with respect to every type of interpolation:
+
+```bash
+Path average differences: 
+Linear Interpolation/Kalman Filter: 0.002157624622
+Linear Interpolation/Kalman Predictor: 0.00182577228
+Kalman Filter/Kalman Predictor: 0.0006042764587
+```
+
+Then, the program will ask the user which type of plot has to be shown. The '3D Plot' is better to have an overview on the trajectory, the '2D Plot' shows better the differences between the different types of trajectories.
+
+```bash
+0 - 3D Plot
+1 - 2D Plot
+```
+
+## License
+[MIT](https://choosealicense.com/licenses/mit/)
