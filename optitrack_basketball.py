@@ -47,7 +47,7 @@ interpolation = ['Linear interpolation', 'Linear interpolation+Kalman Filter', '
 while True:
     print('What kind of interpolation do you want to use?:')
     for i, inter in enumerate(interpolation):
-        print(i, inter)
+        print(i, '-', inter)
     choice = input()
     if choice.isnumeric():
         choice = int(choice)

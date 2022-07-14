@@ -54,10 +54,10 @@ Then, the program will ask you wich type of interpolation you want to use:
 
 ```bash
 What kind of interpolation do you want to use?:
-0 Linear interpolation
-1 Linear interpolation+Kalman Filter
-2 Kalman predictor
-3 No interpolation
+0 - Linear interpolation
+1 - Linear interpolation+Kalman Filter
+2 - Kalman predictor
+3 - No interpolation
 ```
 The animation would start in a new window.
 In the terminal wil be shown some information about the ball and its trajectory:
