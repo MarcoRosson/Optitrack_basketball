@@ -210,7 +210,7 @@ def read_ball(path: str, name: str, MAX_LENGTH):
     ball = ball[:MAX_LENGTH]
     return ball
 
-def ball_cordinates(ball_traj: list):
+def ball_cordinates(ball_traj: list, TD: bool = False):
     ball_x = []
     ball_z = []
     ball_y = []
@@ -220,5 +220,7 @@ def ball_cordinates(ball_traj: list):
         ball_z.append(row[0])
     for row in ball_traj:
         ball_y.append(row[1])
+    if TD:
+        return ball_x,ball_z,ball_y
 
-    return ball_x,ball_z,ball_y
+    return ball_x,ball_y
