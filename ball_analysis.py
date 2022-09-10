@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 
 MAX_LENGTH = 3400
 
-ball_6 = read_ball('Takes\Ball6.csv', 'Ball_6', MAX_LENGTH)
-ball_10 = read_ball('Takes\Ball10.csv', 'Ball_10', MAX_LENGTH)
-ball_14 = read_ball('Takes\Ball14.csv', 'Ball_14', MAX_LENGTH)
+ball_6, error_6 = read_ball('Takes\Ball6.csv', 'Ball_6', MAX_LENGTH)
+ball_10, error_10 = read_ball('Takes\Ball10.csv', 'Ball_10', MAX_LENGTH)
+ball_14, error_14 = read_ball('Takes\Ball14.csv', 'Ball_14', MAX_LENGTH)
+
+print(error_10)
 
 ball_6_inter = interpolate(ball_6) # Linear interpolation
 ball_6_kal_filt = kalman_filt(ball_6_inter) # Kalman filtering
@@ -81,4 +83,8 @@ else:
     ax2.plot(*ball_cordinates(ball_10_inter))
     ax2.plot(*ball_cordinates(ball_14_inter))
 plt.legend(['6 Markers', '10 Markers', '14 Markers'])
+
+
+
+
 plt.show()

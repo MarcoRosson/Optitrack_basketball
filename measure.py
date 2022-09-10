@@ -2,6 +2,7 @@ import numpy as np
 from numpy import float32, round
 from cv2 import KalmanFilter
 from traitlets import Bool
+import optitrack.csv_reader_2 as csv2
 
 def distance_eval(traj: list) -> int:
     distance = 0
@@ -203,6 +204,16 @@ def kalman_pred(traj: list) -> list:
 import optitrack.csv_reader as csv
 
 def read_ball(path: str, name: str, MAX_LENGTH):
+    ball = csv2.Take().readCSV(path)
+    ball = ball.rigid_bodies[name]
+    error = ball.error
+    ball = ball.positions
+    ball = np.array(ball).T.tolist()
+    ball = ball[:MAX_LENGTH]
+    error = error[:MAX_LENGTH]
+    return ball, error
+
+def read_stat(path: str, name: str, MAX_LENGTH):
     ball = csv.Take().readCSV(path)
     ball = ball.rigid_bodies[name]
     ball = ball.positions
