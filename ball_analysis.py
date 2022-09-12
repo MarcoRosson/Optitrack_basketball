@@ -2,12 +2,15 @@ from measure import *
 import matplotlib.pyplot as plt
 
 MAX_LENGTH = 3400
+FRAMERATE = 360
 
 ball_6, error_6 = read_ball('Takes\Ball6.csv', 'Ball_6', MAX_LENGTH)
 ball_10, error_10 = read_ball('Takes\Ball10.csv', 'Ball_10', MAX_LENGTH)
 ball_14, error_14 = read_ball('Takes\Ball14.csv', 'Ball_14', MAX_LENGTH)
 
-print(error_10)
+error_6 = fill_gaps(error_6)
+error_10 = fill_gaps(error_10)
+error_14 = fill_gaps(error_14)
 
 ball_6_inter = interpolate(ball_6) # Linear interpolation
 ball_6_kal_filt = kalman_filt(ball_6_inter) # Kalman filtering
@@ -59,6 +62,7 @@ while True:
 fig = plt.figure()
 #ax = fig.add_subplot(211, projection='3d')
 ax = plt.axes(projection=proj)
+ax.set_title('Interpolation comparison')
 if proj == '3d':
     ax.plot(*ball_cordinates(ball_14_inter, TD=True))
     ax.plot(*ball_cordinates(ball_14_kal_filt, TD=True))
@@ -74,6 +78,7 @@ plt.legend(['Linear Interpolation', 'Linear + Kalman Filter', 'Kalman Predictor'
 
 plt.figure()
 ax2 = plt.axes(projection=proj)
+ax2.set_title('Marker comparison')
 if proj == '3d':
     ax2.plot(*ball_cordinates(ball_6_inter, TD=True))
     ax2.plot(*ball_cordinates(ball_10_inter, TD=True))
@@ -84,7 +89,14 @@ else:
     ax2.plot(*ball_cordinates(ball_14_inter))
 plt.legend(['6 Markers', '10 Markers', '14 Markers'])
 
-
+plt.figure()
+ax3 = plt.axes()
+ax3.set_title('Mean marker error')
+t = np.linspace(0, MAX_LENGTH/FRAMERATE, num=MAX_LENGTH)
+ax3.plot(t, error_6)
+ax3.plot(t, error_10)
+ax3.plot(t, error_14)
+plt.legend(['6 Markers', '10 Markers', '14 Markers'])
 
 
 plt.show()
