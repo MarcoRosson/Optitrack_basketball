@@ -104,6 +104,10 @@ Then, the program will ask the user which type of plot has to be shown. The '3D 
 0 - 3D Plot
 1 - 2D Plot
 ```
+The program will show 3 plots: 
+1 - '*Interpolation comparison*', that compares the same path, interpolated with different types of techniques.
+2 - '*Marker comparison*', that compares the trajectories with different number of markers. The interpolation in this case is the linear one.
+3 - '*Mean marker error*', that compares the average offset between each detected marker position and the corresponding rigid body model marker location. It represents the average quality of detection for every marker.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
