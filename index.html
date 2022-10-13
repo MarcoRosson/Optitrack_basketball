@@ -5,9 +5,14 @@
     video{
         border: 3px solid #2b732b
     }
+    img{
+        border: 3px solid #2b732b
+    }
+
 </style>
 
-<body>
+
+<body style="background-color:rgb(190, 195, 174);">
 
     <h1>Optitrack basketball</h1>
     <p>Motion Capture is a technology that enables movements to be captured in a digital environment, to achieve
@@ -16,31 +21,48 @@
         we are focusing on the latter example, trying to track different types of movements of a basketball player and
         his ball. This type of system could be very useful, in order to help athletes and their team to analyze
         movements and posture, allowing them to improve their performance and prevent injuries.</p>
-    <p>In this analysis, the tracking of a basketball player is inspected. Some of the results are presented in this site, 
+    <p>In this analysis, the tracking of a basketball player is inspected. The results are presented in this site, 
         in form of images and animated gifs.
     </p>
 
-    
-    
 
-
-    <video width="920" height="" autoplay loop muted>
+    <video width="700" height="" autoplay loop muted >
         <source src="Examples\dribbles.mp4" type="video/mp4" />
         Your browser does not support the video tag.
     </video>
 
-    <p>
-        Video 1: animation of ball dribbles
+    <p style="float:center">
+        <em>Video 1: animation of ball dribbles</em>
     </p>
 
-    <video width="920" height="" autoplay loop muted>
+    <video width="700" height="" autoplay loop muted>
         <source src="Examples\shot.mp4" type="video/mp4" />
         Your browser does not support the video tag.
     </video>
 
     <p>
-        Video 2: animation of a free throw
+        <em>Video 2: animation of a free throw</em>
     </p>
+
+    <img src="Examples\interpo_det.png" width="700" alt="Interpolation Detail">
+
+    <p>
+        <em>Figure 1: Comparison between different interpolations</em>
+    </p>
+
+    <img src="Examples\markers.png" width="700" alt="Marker Comparison">
+
+    <p>
+        <em>Figure 2: Comparison between different number of markers</em>
+    </p>
+
+    <img src="Examples\markerror.png" width="700" alt="Mean marker error">
+
+    <p>
+        <em>Figure 3: Comparison of the Mean Marker Error between different number of markers</em>
+    </p>
+
+    
 
 </body>
 
