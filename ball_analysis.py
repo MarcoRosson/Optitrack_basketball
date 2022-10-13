@@ -27,12 +27,6 @@ ball_14_kal_filt = kalman_filt(ball_14_inter) # Kalman filtering
 ball_14_kal_pred = kalman_pred(ball_14) # Interpolation with Kalman
 ball_14_filled, missing_14 = fill_gaps(ball_14, return_missing=True) # No interpolation
 
-print(f"""Missed frame for every marker combination:
-6 Markers: {missing_6},
-10 Markers: {missing_10},
-14 Markers: {missing_14}
-""")
-
 difference_lin_kal = 0
 difference_lin_kal_pred = 0
 difference_kal_kal_pred = 0
